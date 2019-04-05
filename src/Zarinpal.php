@@ -4,8 +4,6 @@
 namespace Zarinpal;
 
 
-
-use GuzzleHttp\Client;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -40,18 +38,11 @@ class Zarinpal
     /**
      * create guzzle client.
      *
-     * @return \GuzzleHttp\Client
+     * @return Client
      */
     private function client()
     {
-        if ($this->sandbox_mode)
-            $base_uri = 'https://sandbox.zarinpal.com/pg/rest/WebGate/';
-        else
-            $base_uri = 'https://www.zarinpal.com/pg/rest/WebGate/';
-
-        return new Client([
-            'base_uri' => $base_uri
-        ]);
+        return new Client($this->sandbox_mode);
     }
 
     /**
@@ -71,13 +62,12 @@ class Zarinpal
      * Request payment.
      * @param int $amount in Tuman
      * @param string $callback
-     * @param array $payload
-     *
+     * @param array $options
      * @return Zarinpal|void
      *
      * @throws NoMerchantIDProvidedException
      */
-    public function payment(int $amount, string $callback, array $payload = [])
+    public function payment(int $amount, string $callback, array $options = [])
     {
 
         if (!Config::has('services.zarinpal.merchant_id') && !$this->merchant_id)
@@ -88,29 +78,24 @@ class Zarinpal
 
         //TODO validate given amount and callbackURL
 
-        if (Arr::has($payload, 'description'))
-            $payment = new Payment($amount, $payload['description']);
+        if (Arr::has($options, 'description'))
+            $payment = new Payment($amount, $options['description']);
         else
             $payment = new Payment($amount);
 
+        $result = $this->client()->paymentRequest(
+            $this->merchant_id,
+            $this->payment->amount,
+            $this->payment->description,
+            $callback,
+            Arr::get($options, 'email'),
+            Arr::get($options, 'phone')
+        );
 
-        $response =
-            $this->client()->post('PaymentRequest.json', [
-                'json' => [
-                    'MerchantID' => $this->merchant_id,
-                    'Amount' => $payment->amount,
-                    'Description' => $payment->description,
-                    'CallbackURL' => $callback
-                ]
-            ]);
-
-        if ($response->getBody()) {
-            $result = json_decode($response->getBody());
-            if ($result->Status == 100) {
-                $payment->authority = $result->Authority;
-                $this->payment = $payment;
-                return $this;
-            }
+        if ($result->Status == 100) {
+            $payment->authority = $result->Authority;
+            $this->payment = $payment;
+            return $this;
         }
 
     }
@@ -136,20 +121,15 @@ class Zarinpal
         $payment = new Payment($amount);
         $payment->authority = $request->input('Authority');
 
-        $response =
-            $this->client()->post('PaymentVerification.json', [
-                'json' => [
-                    'MerchantID' => $this->merchant_id,
-                    'Amount' => $payment->amount,
-                    'Authority' => $payment->authority
-                ]
-            ]);
+        $result = $this->client()->paymentVerification(
+            $this->merchant_id,
+            $this->payment->authority,
+            $this->payment->amount
+        );
 
-        if ($response->getStatusCode() == 200) {
-            $result = json_decode($response->getBody());
-            $payment->status = $result->Status;
-            $payment->RefID = $result->RefID;
-        }
+        $payment->status = $result->Status;
+        $payment->RefID = $result->RefID;
+
 
         return $payment;
 
