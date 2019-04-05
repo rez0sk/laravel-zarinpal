@@ -1,7 +1,6 @@
 # laravel-zarinpal
 
-[![Build Status](https://travis-ci.org/rez0sk/zarinpal-laravel.svg?branch=master)](https://travis-ci.org/rez0sk/zarinpal-laravel)
-
+[![Build Status](https://travis-ci.com/rez0sk/laravel-zarinpal.svg?branch=master)](https://travis-ci.com/rez0sk/laravel-zarinpal)
 
 Laravel package for Zarinpal payment gateway.
 
