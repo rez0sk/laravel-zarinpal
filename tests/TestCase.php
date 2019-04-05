@@ -4,19 +4,22 @@
 namespace Zarinpal\Tests;
 
 
-use Aeris\GuzzleHttpMock\Mock as GuzzleMock;
-use PHPUnit\Framework\TestCase as BaseTestCase;
+use Orchestra\Testbench\TestCase as BaseTestCase;
 
 class TestCase extends BaseTestCase
 {
     private $mockHttp;
 
-
-    public function __construct($name = null, array $data = [], $dataName = '')
+    protected function getPackageProviders($app)
     {
-        parent::__construct($name, $data, $dataName);
-        $this->httpMock = new GuzzleMock();
+        return 'Zarinpal\ZarinpalServiceProvider';
     }
 
+    protected function getPackageAliases($app)
+    {
+        return [
+            'Zarinpal' => 'Zarinpal\Facades\Zarinpal'
+        ];
+    }
 
 }

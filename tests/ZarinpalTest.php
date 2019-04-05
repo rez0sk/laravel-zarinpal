@@ -4,38 +4,29 @@
 namespace Zarinpal\Tests;
 
 
-use GuzzleHttp\Client;
-use Aeris\GuzzleHttpMock\Expect;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
+use stdClass;
+use Zarinpal\Client;
 use Zarinpal\Exceptions\NoMerchantIDProvidedException;
-use Zarinpal\Zarinpal;
+use Zarinpal\Facades\Zarinpal;
+use Mockery;
+use Zarinpal\Payment;
 
 class ZarinpalTest extends TestCase
 {
-    /**
-     * @var Zarinpal
-     */
-    private $zarinpal;
-
     /**
      * Mocking client.
      */
     protected function setUp(): void
     {
         parent::setUp();
-
-        $mock_client = new Client([
-            'base_uri' => 'https://example.com',
-            'handler' => $this->httpMock->getHandlerStackWithMiddleware()
-
-        ]);
-
-        $this->zarinpal = new Zarinpal();
-        $this->zarinpal->client = $mock_client;
+        //
     }
 
     /**
      * @test if phpunit works correctly.
+     * @coversNothing
      *
      * @return void
      */
@@ -44,47 +35,110 @@ class ZarinpalTest extends TestCase
         $this->assertTrue(true);
     }
 
-
     /**
-     * @test if NoMerchantIDProvided thrown correctly.
+     * @test if exceptions throws when there is no merchant id provided.
+     * Given: no merchant provided
+     * @covers \Zarinpal\Zarinpal::pay
      *
      * @return void
-     * @throws NoMerchantIDProvidedException
+     *
      */
-    public function payment_with_amount_and_callback()
+    public function test_merchant_id_exception()
     {
         $this->expectException(NoMerchantIDProvidedException::class);
 
-        Config::shouldReceive('has')->twice();
-        Config::shouldReceive('get')->once();
-
-        $zarinpal = new Zarinpal();
-        $zarinpal->payment('200', 'http://example.com');
-
+        Zarinpal::pay(200, 'http://exmaple.com');
     }
 
     /**
-     * @test setting merchantID.
+     * @test if it accepts dynamic MerchantID
+     * @covers \Zarinpal\Zarinpal::setMerchantID
+     * @return void
+     */
+    public function providing_merchant_dynamically()
+    {
+        $mock_response = new stdClass();
+        $mock_response->Status = 100;
+        $mock_response->Authority = '0000001234';
+
+        $this->mockClient('paymentRequest', $mock_response);
+
+        Zarinpal::setMerchantID('xxxx-xxxx-xxxx');
+        $result = Zarinpal::pay(200, 'http://exmaple.com');
+
+        $this->assertIsObject($result);
+        $this->assertEquals(200, $result->payment->amount);
+    }
+
+    /**
+     * @test if it accepts MerchantID from config
+     * Given: MerchantID stored in config/services.php
+     * @covers \Zarinpal\Zarinpal::pay
      *
      * @return void
-     * @throws NoMerchantIDProvidedException
      */
-    public function getting_merchant_from_config()
+    public function getting_merchantId_from_config()
     {
-        $this->httpMock
-            ->shouldReceiveRequest()
-            ->withMethod('POST')
-            ->withUrl('https://example.com/PaymentRequest.json')
-            ->withBodyParams(new Expect\Any())
-            ->andRespondWithJson([
-                'Status' => 100,
-                'Authority' => '000212121'
-            ], $statusCode = 200);
+        Config::shouldReceive('has')->twice()->andReturnTrue();
+        Config::shouldReceive('get')->times(3)->andReturn('xxxxx-xxxx-xxx');
 
-        $this->zarinpal->setMerchantID('xxxx-xxx-xxx');
-        $result = $this->zarinpal->payment('200', 'http://example.com');
+        $mock_response = new stdClass();
+        $mock_response->Status = 100;
+        $mock_response->Authority = '0000001234';
 
-        $this->assertNull($this->httpMock->verify());
-        //$this->assertInstanceOf(Request::class, $result);
+        $this->mockClient('paymentRequest', $mock_response);
+
+        $result = Zarinpal::pay(200, 'http://exmaple.com');
+
+        $this->assertIsObject($result);
+        $this->assertEquals(200, $result->payment->amount);
+    }
+
+    /**
+     * @test if simple verification is possible
+     * @covers \Zarinpal\Zarinpal::verify
+     *
+     * @return void
+     */
+    public function verifing_simple_transaction()
+    {
+        $response = new stdClass;
+        $response->Status = 100;
+        $response->RefID = 123456789;
+
+        $this->mockClient('paymentVerification', $response);
+
+        $request = new Request;
+        $request->replace([
+            'Status' => 'OK',
+            'Authority' => '000001233'
+        ]);
+
+        Zarinpal::setMerchantID('xxxx-xxxx-xxxx');
+        $result = Zarinpal::verify($request, 200);
+
+        $this->assertInstanceOf(Payment::class, $result);
+        $this->assertEquals(200, $result->amount);
+        $this->assertEquals($response->RefID, $result->RefID);
+    }
+
+
+    /**
+     * Helper function for mocking Zarinpal\Client.
+     *
+     * @param string $endpoint
+     * @param stdClass $response
+     *
+     * @return void
+     */
+    private function mockClient(string $endpoint, stdClass $response)
+    {
+        $mock_client = Mockery::mock(Client::class);
+        $mock_client->shouldReceive($endpoint)
+            ->once()
+            ->andReturn($response);
+
+        Zarinpal::shouldReceive('client')->andReturn($mock_client);
+        Zarinpal::getFacadeRoot()->makePartial();
     }
 }

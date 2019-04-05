@@ -14,7 +14,7 @@ class Client
      *
      * @param bool $sandbox_mode
      */
-    public function __construct(bool $sandbox_mode = false)
+    public function __construct(bool $sandbox_mode = null)
     {
         if ($sandbox_mode)
             $base_uri = 'https://sandbox.zarinpal.com/pg/rest/WebGate/';

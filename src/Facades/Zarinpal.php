@@ -4,8 +4,9 @@
 namespace Zarinpal\Facades;
 
 /**
- * @method static \Illuminate\Http\RedirectResponse payment(int $amount, string $callback, array $options = [])
- * @method static \Illuminate\Http\RedirectResponse setMerchantID(string $MerchantId)
+ * @method static \Illuminate\Http\RedirectResponse pay(int $amount, string $callback, array $options = [])
+ * @method static void setMerchantID(string $MerchantId)
+ * @method static \Zarinpal\Payment verify(\Illuminate\Http\Request $request, int $amount)
  *
  * @see \Zarinpal\Zarinpal
  */

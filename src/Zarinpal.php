@@ -33,14 +33,14 @@ class Zarinpal
      * @var Payment
      */
 
-    private $payment;
+    public $payment;
 
     /**
      * create guzzle client.
      *
      * @return Client
      */
-    private function client()
+    protected function client()
     {
         return new Client($this->sandbox_mode);
     }
@@ -67,14 +67,9 @@ class Zarinpal
      *
      * @throws NoMerchantIDProvidedException
      */
-    public function payment(int $amount, string $callback, array $options = [])
+    public function pay(int $amount, string $callback, array $options = [])
     {
-
-        if (!Config::has('services.zarinpal.merchant_id') && !$this->merchant_id)
-            throw new NoMerchantIDProvidedException;
-
-        if (Config::has('services.zarinpal.merchant_id'))
-            $this->merchant_id = Config::get('services.zarinpal.merchant_id‬‬');
+        $this->loadMerchant();
 
         //TODO validate given amount and callbackURL
 
@@ -85,8 +80,8 @@ class Zarinpal
 
         $result = $this->client()->paymentRequest(
             $this->merchant_id,
-            $this->payment->amount,
-            $this->payment->description,
+            $payment->amount,
+            $payment->description,
             $callback,
             Arr::get($options, 'email'),
             Arr::get($options, 'phone')
@@ -108,10 +103,13 @@ class Zarinpal
      * @return Payment
      *
      * @throws FailedTransactionException
+     * @throws NoMerchantIDProvidedException
      */
 
     public function verify(Request $request, int $amount)
     {
+        $this->loadMerchant();
+
         if (!$request->has('Status') || !$request->has('Authority'))
             throw new InvalidResponseException('Invalid response from Zarinpal. Status and Authority parameters expected.');
 
@@ -123,8 +121,8 @@ class Zarinpal
 
         $result = $this->client()->paymentVerification(
             $this->merchant_id,
-            $this->payment->authority,
-            $this->payment->amount
+            $payment->authority,
+            $payment->amount
         );
 
         $payment->status = $result->Status;
@@ -145,6 +143,21 @@ class Zarinpal
     {
         $this->merchant_id = $id;
         return $this;
+    }
+
+    /**
+     * Load merchant if it's not setted.
+     *
+     * @return void
+     * @throws NoMerchantIDProvidedException
+     */
+    public function loadMerchant()
+    {
+        if (!Config::has('services.zarinpal.merchant_id') && !$this->merchant_id)
+            throw new NoMerchantIDProvidedException;
+
+        if (Config::has('services.zarinpal.merchant_id'))
+            $this->merchant_id = Config::get('services.zarinpal.merchant_id‬‬');
     }
 
     /**
