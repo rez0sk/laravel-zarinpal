@@ -1,0 +1,13 @@
+language: php
+
+sudo: false
+
+php:
+  - 7.1
+  - 7.2
+  - 7.3
+
+install:
+  travis_retry composer install --dev --prefer-dist --no-interaction --no-suggest
+
+script: vendor/bin/phpunit --verbose
