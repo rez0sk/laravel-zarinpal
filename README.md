@@ -45,10 +45,55 @@ public function boot()
     }
 }
 ```
+## Usage
+Simply issue a payment-request and redirect user to Zarinpal with one shot!
+```php
+use Zarinpal\Facades\Zarinpal;
+...
 
+public function someControllerFunction ()
+{
+    return Zarinpal::pay(2000, route('paymnet.verify', $order->id))->redirect();
+}
+```
+Or retrieve Authority code and redirect manually:
+```php
+Zarinpal::pay(2000, 'http://callback.url/id')->payment->authority
+```
+
+There are some additional information you can provide for payment:
+```php
+Zarinpal::pay(2000, 'http://callback.url/id', [
+        'description' => 'This is such a dummy order!',
+        'email' => 'User's email address',
+        'phone' => 'User's phone number'
+]);
+```
+
+#### Dynamic MerchantID
+You can dynamically set MerchantID before each payment:
+```php
+Zarinpal::setMerchantID('xxxxx-xxxx-xxx');
+Zarinpal::pay(...)
+```
+
+### Payment Verification
+```php
+public function verifyOrderPayment (Order $order, Request $request)
+{
+    $result = Zarinpal::verify($request, $order->TotalPrice);
+    
+    $result->status //Status code. 100 means success :)
+    $result->RefID //Payment's unique ReferenceID
+    $result->amount // Payment's amount in Tuman. (Always use Toman with Zarinpal)
+    $result->description //Payment's description.
+}
+
+
+```
 
 ### TODO 
 - [x] CI setup.
-- [ ] Adding examples.
+- [x] Adding examples.
 - [ ] Improve tests.
-- [ ] Suppert wages.
+- [ ] Support wages.
