@@ -8,8 +8,6 @@ use Orchestra\Testbench\TestCase as BaseTestCase;
 
 class TestCase extends BaseTestCase
 {
-    private $mockHttp;
-
     protected function getPackageProviders($app)
     {
         return 'Zarinpal\ZarinpalServiceProvider';
