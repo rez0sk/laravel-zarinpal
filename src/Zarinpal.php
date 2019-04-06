@@ -157,7 +157,7 @@ class Zarinpal
             throw new NoMerchantIDProvidedException;
 
         if (Config::has('services.zarinpal.merchant_id'))
-            $this->merchant_id = Config::get('services.zarinpal.merchant_id‬‬');
+            $this->merchant_id = Config::get('services.zarinpal.merchant_id');
     }
 
     /**
