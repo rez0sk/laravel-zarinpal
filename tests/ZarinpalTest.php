@@ -3,25 +3,29 @@
 
 namespace Zarinpal\Tests;
 
-
+use Zarinpal\Zarinpal;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Config;
 use stdClass;
-use Zarinpal\Client;
-use Zarinpal\Exceptions\NoMerchantIDProvidedException;
-use Zarinpal\Facades\Zarinpal;
 use Mockery;
+use Zarinpal\Client;
 use Zarinpal\Payment;
+use Zarinpal\Exceptions\NoMerchantIDProvidedException;
 
 class ZarinpalTest extends TestCase
 {
+    /**
+     * Mocked client.
+     * @var Client
+     */
+    private $client;
+
     /**
      * Mocking client.
      */
     protected function setUp(): void
     {
         parent::setUp();
-        //
+        $this->client = Mockery::mock(Client::class);
     }
 
     /**
@@ -42,18 +46,24 @@ class ZarinpalTest extends TestCase
      *
      * @return void
      *
+     * @throws NoMerchantIDProvidedException
      */
     public function test_merchant_id_exception()
     {
         $this->expectException(NoMerchantIDProvidedException::class);
-
-        Zarinpal::pay(200, 'http://exmaple.com');
+        $client = Mockery::spy(Client::class);
+        $zarinpal = new Zarinpal(null , true, $client);
+        $client->shouldNotHaveBeenCalled(['paymentRequest']);
+        $zarinpal->pay(200, 'http://exmaple.com');
     }
 
     /**
      * @test if it accepts dynamic MerchantID
      * @covers \Zarinpal\Zarinpal::setMerchantID
+     *
      * @return void
+     *
+     * @throws NoMerchantIDProvidedException
      */
     public function providing_merchant_dynamically()
     {
@@ -61,10 +71,17 @@ class ZarinpalTest extends TestCase
         $mock_response->Status = 100;
         $mock_response->Authority = '0000001234';
 
-        $this->mockClient('paymentRequest', $mock_response);
+        $client = $this->client
+            ->shouldReceive('paymentRequest')
+            ->with(Mockery::hasValue('xxxx-xxxx-xxxx'))
+            ->andReturns($mock_response)
+            ->getMock();
 
-        Zarinpal::setMerchantID('xxxx-xxxx-xxxx');
-        $result = Zarinpal::pay(200, 'http://exmaple.com');
+
+        $zarinpal = new Zarinpal(null, 1, $client);
+
+        $zarinpal->setMerchantID('xxxx-xxxx-xxxx');
+        $result = $zarinpal->pay(200, 'http://exmaple.com');
 
         $this->assertIsObject($result);
         $this->assertEquals(200, $result->payment->amount);
@@ -76,19 +93,23 @@ class ZarinpalTest extends TestCase
      * @covers \Zarinpal\Zarinpal::pay
      *
      * @return void
+     * @throws NoMerchantIDProvidedException
      */
     public function getting_merchantId_from_config()
     {
-        Config::shouldReceive('has')->twice()->andReturnTrue();
-        Config::shouldReceive('get')->times(3)->andReturn('xxxxx-xxxx-xxx');
-
         $mock_response = new stdClass();
         $mock_response->Status = 100;
         $mock_response->Authority = '0000001234';
 
-        $this->mockClient('paymentRequest', $mock_response);
+        $client = $this->client
+            ->shouldReceive('paymentRequest')
+            ->with(Mockery::hasValue('xxxx-xxxx-xxxx'))
+            ->andReturns($mock_response)
+            ->getMock();
 
-        $result = Zarinpal::pay(200, 'http://exmaple.com');
+        $zarinpal = new Zarinpal('xxxx-xxxx-xxxx', 1, $client);
+
+        $result = $zarinpal->pay(200, 'http://exmaple.com');
 
         $this->assertIsObject($result);
         $this->assertEquals(200, $result->payment->amount);
@@ -99,6 +120,8 @@ class ZarinpalTest extends TestCase
      * @covers \Zarinpal\Zarinpal::verify
      *
      * @return void
+     * @throws NoMerchantIDProvidedException
+     * @throws \Zarinpal\Exceptions\FailedTransactionException
      */
     public function verifing_simple_transaction()
     {
@@ -106,7 +129,15 @@ class ZarinpalTest extends TestCase
         $response->Status = 100;
         $response->RefID = 123456789;
 
-        $this->mockClient('paymentVerification', $response);
+        $client = $this->client
+            ->shouldReceive('paymentVerification')
+            ->with(Mockery::subset([
+                'MerchantID' => 'xxxx-xxxx-xxxx',
+                'Amount' => 200,
+                'Authority' => '000001233'
+            ]))
+            ->andReturns($response)
+            ->getMock();
 
         $request = new Request;
         $request->replace([
@@ -114,8 +145,9 @@ class ZarinpalTest extends TestCase
             'Authority' => '000001233'
         ]);
 
-        Zarinpal::setMerchantID('xxxx-xxxx-xxxx');
-        $result = Zarinpal::verify($request, 200);
+        $zarinpal = new Zarinpal('xxxx-xxxx-xxxx', 1, $client);
+
+        $result = $zarinpal->verify($request, 200);
 
         $this->assertInstanceOf(Payment::class, $result);
         $this->assertEquals(200, $result->amount);
@@ -123,22 +155,9 @@ class ZarinpalTest extends TestCase
     }
 
 
-    /**
-     * Helper function for mocking Zarinpal\Client.
-     *
-     * @param string $endpoint
-     * @param stdClass $response
-     *
-     * @return void
-     */
-    private function mockClient(string $endpoint, stdClass $response)
+    public function tearDown(): void
     {
-        $mock_client = Mockery::mock(Client::class);
-        $mock_client->shouldReceive($endpoint)
-            ->once()
-            ->andReturn($response);
-
-        Zarinpal::shouldReceive('client')->andReturn($mock_client);
-        Zarinpal::getFacadeRoot()->makePartial();
+        Mockery::close();
+        parent::tearDown();
     }
 }

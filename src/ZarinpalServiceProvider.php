@@ -4,8 +4,8 @@
 namespace Zarinpal;
 
 
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\ServiceProvider;
-use SoapClient;
 
 class ZarinpalServiceProvider extends ServiceProvider
 {
@@ -26,7 +26,7 @@ class ZarinpalServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->singleton('zarinpal', function() {
-            return new Zarinpal;
+            return new Zarinpal(Config::get('services.zarinpal.merchant_id'));
         });
     }
 

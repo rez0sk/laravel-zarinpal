@@ -27,7 +27,14 @@ class Zarinpal
      *
      * @var boolean
      */
-    protected $sandbox_mode;
+    private $sandbox_mode;
+
+    /**
+     * Client instance.
+     *
+     * @var Client
+     */
+    private $client;
 
     /**
      * @var Payment
@@ -35,27 +42,22 @@ class Zarinpal
 
     public $payment;
 
-    /**
-     * create guzzle client.
-     *
-     * @return Client
-     */
-    protected function client()
-    {
-        return new Client($this->sandbox_mode);
-    }
 
     /**
-     * return redirect response.
-     *
-     * @return RedirectResponse
+     * Zarinpal constructor.
+     * @param string|null $merchant_id
+     * @param bool|null $sandbox_mode
+     * @param Client|null $client
      */
-    public function redirect()
+    public function __construct(
+        string $merchant_id = null,
+        bool $sandbox_mode = null,
+        $client = null
+    )
     {
-        if ($this->sandbox_mode)
-            return Redirect::away('https://sandbox.zarinpal.com/pg/StartPay/' . $this->payment->authority);
-
-        return Redirect::away('https://www.zarinpal.com/pg/StartPay/' . $this->payment->authority);
+        $this->merchant_id = $merchant_id;
+        $this->sandbox_mode = $sandbox_mode;
+        $client ? $this->client = $client : $this->client = new Client;
     }
 
     /**
@@ -69,8 +71,8 @@ class Zarinpal
      */
     public function pay(int $amount, string $callback, array $options = [])
     {
-        $this->loadMerchant();
-
+        if (!$this->merchant_id)
+            throw new NoMerchantIDProvidedException;
         //TODO validate given amount and callbackURL
 
         if (Arr::has($options, 'description'))
@@ -78,14 +80,14 @@ class Zarinpal
         else
             $payment = new Payment($amount);
 
-        $result = $this->client()->paymentRequest(
-            $this->merchant_id,
-            $payment->amount,
-            $payment->description,
-            $callback,
-            Arr::get($options, 'email'),
-            Arr::get($options, 'phone')
-        );
+        $result = $this->client->paymentRequest([
+            'MerchantID' => $this->merchant_id,
+            'Amount' => $payment->amount,
+            'Description' => $payment->description,
+            'Callback' => $callback,
+            'Email' => Arr::get($options, 'email'),
+            'Phone' => Arr::get($options, 'phone')
+        ]);
 
         if ($result->Status == 100) {
             $payment->authority = $result->Authority;
@@ -105,10 +107,10 @@ class Zarinpal
      * @throws FailedTransactionException
      * @throws NoMerchantIDProvidedException
      */
-
     public function verify(Request $request, int $amount)
     {
-        $this->loadMerchant();
+        if (!$this->merchant_id)
+            throw new NoMerchantIDProvidedException;
 
         if (!$request->has('Status') || !$request->has('Authority'))
             throw new InvalidResponseException('Invalid response from Zarinpal. Status and Authority parameters expected.');
@@ -119,11 +121,11 @@ class Zarinpal
         $payment = new Payment($amount);
         $payment->authority = $request->input('Authority');
 
-        $result = $this->client()->paymentVerification(
-            $this->merchant_id,
-            $payment->authority,
-            $payment->amount
-        );
+        $result = $this->client->paymentVerification([
+            'MerchantID' => $this->merchant_id,
+            'Authority' => $payment->authority,
+            'Amount' => $payment->amount
+        ]);
 
         $payment->status = $result->Status;
         $payment->RefID = $result->RefID;
@@ -131,6 +133,19 @@ class Zarinpal
 
         return $payment;
 
+    }
+
+    /**
+     * return redirect response.
+     *
+     * @return RedirectResponse
+     */
+    public function redirect()
+    {
+        if ($this->sandbox_mode)
+            return Redirect::away('https://sandbox.zarinpal.com/pg/StartPay/' . $this->payment->authority);
+
+        return Redirect::away('https://www.zarinpal.com/pg/StartPay/' . $this->payment->authority);
     }
 
     /**
@@ -146,26 +161,10 @@ class Zarinpal
     }
 
     /**
-     * Load merchant if it's not setted.
-     *
-     * @return void
-     * @throws NoMerchantIDProvidedException
-     */
-    public function loadMerchant()
-    {
-        if (!Config::has('services.zarinpal.merchant_id') && !$this->merchant_id)
-            throw new NoMerchantIDProvidedException;
-
-        if (Config::has('services.zarinpal.merchant_id'))
-            $this->merchant_id = Config::get('services.zarinpal.merchant_id');
-    }
-
-    /**
      * Enable Zarinpal's sandbox mode.
      *
      * @return Zarinpal
      */
-
     public function enableSandbox()
     {
         $this->sandbox_mode = true;
