@@ -4,6 +4,9 @@
 namespace Zarinpal;
 
 use GuzzleHttp\Client as HttpClient;
+use GuzzleHttp\Exception\ClientException;
+use Illuminate\Support\Arr;
+use Zarinpal\Exceptions\InvalidDataException;
 
 class Client
 {
@@ -35,16 +38,28 @@ class Client
      * Payment Request
      *
      * @param array $data
+     *
      * @return mixed
+     *
+     * @throws InvalidDataException
      */
     public function paymentRequest (array $data)
     {
-        $response =
-            $this->http->post('PaymentRequest.json', [
-                'json' => $data
-            ]);
+        try {
+            $response =
+                $this->http->post('PaymentRequest.json', [
+                    'json' => [
+                        'MerchantID' => 'test'
+                    ]
+                ]);
 
-        return json_decode($response->getBody());
+            return json_decode($response->getBody());
+
+        } catch (ClientException $exception) {
+            $res = json_decode($exception->getResponse()->getBody(), 1);
+            $message = data_get($res, 'errors.*.0');
+            throw new InvalidDataException(implode(' ', $message), $res['Status'], $res);
+        }
     }
 
     /**

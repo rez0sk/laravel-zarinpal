@@ -16,13 +16,6 @@ class ClientTest extends TestCase
 
     private $guzzle;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->guzzle = new Guzzle([ 'base_uri' => 'http://example.com' ]);
-
-    }
-
     /**
      * @test if it returns response on ok status.
      * @covers \Zarinpal\Client::paymentRequest
@@ -42,6 +35,22 @@ class ClientTest extends TestCase
         $client = new Client(true, $guzzle);
         $result = $client->paymentRequest(array());
         $this->assertNull($result);
+    }
+
+    /**
+     * @test if it throws exception on 404 response.
+     *
+     */
+    public function not_found_error_on_paymentRequest()
+    {
+        $mock = new MockHandler([
+            new Response(404)
+        ]);
+        $handler = HandlerStack::create($mock);
+        $guzzle = new Guzzle(['base_uri' => 'https://sandbox.zarinpal.com/pg/rest/WebGate/']);
+
+        $client = new Client(true, $guzzle);
+        $result = $client->paymentRequest(array());
     }
 
 }
