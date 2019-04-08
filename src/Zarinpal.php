@@ -57,7 +57,7 @@ class Zarinpal
     {
         $this->merchant_id = $merchant_id;
         $this->sandbox_mode = $sandbox_mode;
-        $client ? $this->client = $client : $this->client = new Client;
+        $client ? $this->client = $client : $this->client = new Client($sandbox_mode);
     }
 
     /**
@@ -165,6 +165,7 @@ class Zarinpal
 
     /**
      * Enable Zarinpal's sandbox mode.
+     *  TODO: fix this function. it's useless.
      *
      * @return Zarinpal
      */
@@ -172,6 +173,16 @@ class Zarinpal
     {
         $this->sandbox_mode = true;
         return $this;
+    }
+
+    /**
+     * Get client.
+     *
+     * @return Client
+     */
+    public function getClient()
+    {
+        return $this->client;
     }
 
 }

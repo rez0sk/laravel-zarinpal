@@ -5,12 +5,17 @@ namespace Zarinpal;
 
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\ClientException;
-use Illuminate\Support\Arr;
 use Zarinpal\Exceptions\InvalidDataException;
 
 class Client
 {
     private $http;
+
+    /**
+     * Sandbox mode flag.
+     * @var bool|null
+     */
+    private $sandbox_mode;
 
     /**
      * Client constructor.
@@ -23,6 +28,8 @@ class Client
         HttpClient $httpClient = null
     )
     {
+        $this->sandbox_mode = $sandbox_mode;
+
         if ($sandbox_mode)
             $base_uri = 'https://sandbox.zarinpal.com/pg/rest/WebGate/';
         else
@@ -61,4 +68,13 @@ class Client
         }
     }
 
+    /**
+     * Is sandbox mode
+     *
+     * @return bool
+     */
+    public function isSandbox()
+    {
+        return $this->sandbox_mode;
+    }
 }

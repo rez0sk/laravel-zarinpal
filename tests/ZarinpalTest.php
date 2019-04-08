@@ -96,6 +96,7 @@ class ZarinpalTest extends TestCase
      *
      * @return void
      * @throws NoMerchantIDProvidedException
+     * @throws \Zarinpal\Exceptions\InvalidDataException
      */
     public function getting_merchantId_from_config()
     {
@@ -157,6 +158,16 @@ class ZarinpalTest extends TestCase
         $this->assertEquals($response->RefID, $result->RefID);
     }
 
+    /**
+     * @test if it passes sandbox flag to Client
+     *
+     */
+    public function sandbox_flag_passes()
+    {
+        $zarinpal = new Zarinpal('xxx-xxx-xxx', true);
+        $this->assertTrue($zarinpal->getClient()->isSandbox());
+
+    }
 
     public function tearDown(): void
     {
