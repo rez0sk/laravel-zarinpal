@@ -37,20 +37,19 @@ class Client
     /**
      * Payment Request
      *
+     * @param string $endpoint
      * @param array $data
      *
      * @return mixed
      *
      * @throws InvalidDataException
      */
-    public function paymentRequest (array $data)
+    public function request (string $endpoint, array $data)
     {
         try {
             $response =
-                $this->http->post('PaymentRequest.json', [
-                    'json' => [
-                        'MerchantID' => 'test'
-                    ]
+                $this->http->post($endpoint, [
+                    'json' => $data
                 ]);
 
             return json_decode($response->getBody());
@@ -62,19 +61,4 @@ class Client
         }
     }
 
-    /**
-     * Payment Verification
-     *
-     * @param array $data
-     * @return mixed
-     */
-    public function paymentVerification (array $data)
-    {
-        $response =
-            $this->http->post('PaymentVerification.json', [
-                'json' => $data
-            ]);
-
-        return json_decode($response->getBody());
-    }
 }

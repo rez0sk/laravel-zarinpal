@@ -65,9 +65,11 @@ class Zarinpal
      * @param int $amount in Tuman
      * @param string $callback
      * @param array $options
+     *
      * @return Zarinpal|void
      *
      * @throws NoMerchantIDProvidedException
+     * @throws Exceptions\InvalidDataException
      */
     public function pay(int $amount, string $callback, array $options = [])
     {
@@ -80,7 +82,7 @@ class Zarinpal
         else
             $payment = new Payment($amount);
 
-        $result = $this->client->paymentRequest([
+        $result = $this->client->request('PaymentRequest.json', [
             'MerchantID' => $this->merchant_id,
             'Amount' => $payment->amount,
             'Description' => $payment->description,
@@ -106,6 +108,7 @@ class Zarinpal
      *
      * @throws FailedTransactionException
      * @throws NoMerchantIDProvidedException
+     * @throws Exceptions\InvalidDataException
      */
     public function verify(Request $request, int $amount)
     {
@@ -121,7 +124,7 @@ class Zarinpal
         $payment = new Payment($amount);
         $payment->authority = $request->input('Authority');
 
-        $result = $this->client->paymentVerification([
+        $result = $this->client->request('PaymentVerification.json', [
             'MerchantID' => $this->merchant_id,
             'Authority' => $payment->authority,
             'Amount' => $payment->amount

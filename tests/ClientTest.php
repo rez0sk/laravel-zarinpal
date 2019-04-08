@@ -8,8 +8,6 @@ use GuzzleHttp\Client as Guzzle;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
-use function GuzzleHttp\Psr7\stream_for;
-use stdClass;
 use Zarinpal\Client;
 use Zarinpal\Exceptions\InvalidDataException;
 
@@ -35,7 +33,7 @@ class ClientTest extends TestCase
         $guzzle = new Guzzle(['base_uri' => 'http://example.com', 'handler' => $handler]);
 
         $client = new Client(true, $guzzle);
-        $result = $client->paymentRequest(array());
+        $result = $client->request('PaymentRequest.json', array());
         $this->assertNull($result);
     }
 
@@ -57,7 +55,7 @@ class ClientTest extends TestCase
         $guzzle = new Guzzle(['base_uri' => 'http://example.com', 'handler' => $handler]);
 
         $client = new Client(true, $guzzle);
-        $result = $client->paymentRequest(array());
+        $result = $client->request('PaymentRequest.json', array());
         $this->assertNull($result);
 
     }

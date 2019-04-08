@@ -47,6 +47,7 @@ class ZarinpalTest extends TestCase
      * @return void
      *
      * @throws NoMerchantIDProvidedException
+     * @throws \Zarinpal\Exceptions\InvalidDataException
      */
     public function test_merchant_id_exception()
     {
@@ -64,6 +65,7 @@ class ZarinpalTest extends TestCase
      * @return void
      *
      * @throws NoMerchantIDProvidedException
+     * @throws \Zarinpal\Exceptions\InvalidDataException
      */
     public function providing_merchant_dynamically()
     {
@@ -72,8 +74,8 @@ class ZarinpalTest extends TestCase
         $mock_response->Authority = '0000001234';
 
         $client = $this->client
-            ->shouldReceive('paymentRequest')
-            ->with(Mockery::hasValue('xxxx-xxxx-xxxx'))
+            ->shouldReceive('request')
+            ->with('PaymentRequest.json', Mockery::hasValue('xxxx-xxxx-xxxx'))
             ->andReturns($mock_response)
             ->getMock();
 
@@ -102,8 +104,8 @@ class ZarinpalTest extends TestCase
         $mock_response->Authority = '0000001234';
 
         $client = $this->client
-            ->shouldReceive('paymentRequest')
-            ->with(Mockery::hasValue('xxxx-xxxx-xxxx'))
+            ->shouldReceive('request')
+            ->with('PaymentRequest.json', Mockery::hasValue('xxxx-xxxx-xxxx'))
             ->andReturns($mock_response)
             ->getMock();
 
@@ -122,6 +124,7 @@ class ZarinpalTest extends TestCase
      * @return void
      * @throws NoMerchantIDProvidedException
      * @throws \Zarinpal\Exceptions\FailedTransactionException
+     * @throws \Zarinpal\Exceptions\InvalidDataException
      */
     public function verifing_simple_transaction()
     {
@@ -130,8 +133,8 @@ class ZarinpalTest extends TestCase
         $response->RefID = 123456789;
 
         $client = $this->client
-            ->shouldReceive('paymentVerification')
-            ->with(Mockery::subset([
+            ->shouldReceive('request')
+            ->with('PaymentVerification.json', Mockery::subset([
                 'MerchantID' => 'xxxx-xxxx-xxxx',
                 'Amount' => 200,
                 'Authority' => '000001233'
