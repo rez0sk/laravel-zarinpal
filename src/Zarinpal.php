@@ -86,7 +86,7 @@ class Zarinpal
             'MerchantID' => $this->merchant_id,
             'Amount' => $payment->amount,
             'Description' => $payment->description,
-            'Callback' => $callback,
+            'CallbackURL' => $callback,
             'Email' => Arr::get($options, 'email'),
             'Phone' => Arr::get($options, 'phone')
         ]);
