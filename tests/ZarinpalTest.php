@@ -161,12 +161,25 @@ class ZarinpalTest extends TestCase
     /**
      * @test if it passes sandbox flag to Client
      *
+     * @return void
      */
     public function sandbox_flag_passes()
     {
         $zarinpal = new Zarinpal('xxx-xxx-xxx', true);
         $this->assertTrue($zarinpal->getClient()->isSandbox());
 
+    }
+
+    /**
+     * @test if it's passable to enable sandbox mode dynamically
+     *
+     * @return void
+     */
+    public function dynamic_sandbox()
+    {
+        $zarinpal = new Zarinpal('xxx-xxx-xxx', false);
+        $zarinpal->enableSandbox();
+        $this->assertTrue($zarinpal->getClient()->isSandbox());
     }
 
     public function tearDown(): void

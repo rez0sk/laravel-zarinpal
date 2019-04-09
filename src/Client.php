@@ -77,4 +77,17 @@ class Client
     {
         return $this->sandbox_mode;
     }
+
+
+    /**
+     * Enable sandbox.
+     *
+     * @return void
+     */
+    public function enableSandbox()
+    {
+        $this->sandbox_mode = true;
+        $base_uri = 'https://sandbox.zarinpal.com/pg/rest/WebGate/';
+        $this->http = new HttpClient([ 'base_uri' => $base_uri ]);
+    }
 }

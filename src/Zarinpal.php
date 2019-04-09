@@ -172,6 +172,7 @@ class Zarinpal
     public function enableSandbox()
     {
         $this->sandbox_mode = true;
+        $this->client->enableSandbox();
         return $this;
     }
 
