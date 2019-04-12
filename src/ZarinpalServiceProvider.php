@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Zarinpal;
-
 
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\ServiceProvider;
@@ -18,6 +16,7 @@ class ZarinpalServiceProvider extends ServiceProvider
     {
         //
     }
+
     /**
      * Register the service provider.
      *
@@ -25,9 +24,8 @@ class ZarinpalServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->app->singleton('zarinpal', function() {
+        $this->app->singleton('zarinpal', function () {
             return new Zarinpal(Config::get('services.zarinpal.merchant_id'));
         });
     }
-
 }

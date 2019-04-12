@@ -1,18 +1,15 @@
 <?php
 
-
 namespace Zarinpal;
-
 
 use Illuminate\Support\Facades\Config;
 
 class Payment
 {
-
     /**
      * Amount in Tumaan.
      *
-     * @var integer
+     * @var int
      */
     public $amount;
 
@@ -24,31 +21,30 @@ class Payment
     public $description;
 
     /**
-     * Zarinpal's Authority
+     * Zarinpal's Authority.
      *
      * @var string
      */
     public $authority;
 
     /**
-     * Payment status code
+     * Payment status code.
      *
      * @var int
      */
     public $status;
 
     /**
-     * Payment RefID code
+     * Payment RefID code.
      *
      * @var int
      */
     public $RefID;
 
-
-
     /**
      * Payment constructor.
-     * @param int $amount
+     *
+     * @param int         $amount
      * @param string|null $description
      * @param string|null $authority
      */
@@ -57,10 +53,10 @@ class Payment
         $this->amount = $amount;
         $this->authority = $authority;
 
-        if ($description == null || $description == "")
+        if ($description == null || $description == '') {
             $this->description = Config::get('services.zarinpal.description', Config::get('app.name'));
-        else
+        } else {
             $this->description = $description;
+        }
     }
-
 }
