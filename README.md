@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.com/rez0sk/laravel-zarinpal.svg?branch=master)](https://travis-ci.com/rez0sk/laravel-zarinpal)
 [![codecov](https://codecov.io/gh/rez0sk/laravel-zarinpal/branch/master/graph/badge.svg)](https://codecov.io/gh/rez0sk/laravel-zarinpal)
+[![StyleCI](https://github.styleci.io/repos/179698413/shield?branch=master)](https://github.styleci.io/repos/179698413)
 
 
 Laravel package for Zarinpal payment gateway.
