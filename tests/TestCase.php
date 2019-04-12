@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Zarinpal\Tests;
-
 
 use Orchestra\Testbench\TestCase as BaseTestCase;
 
@@ -16,8 +14,7 @@ class TestCase extends BaseTestCase
     protected function getPackageAliases($app)
     {
         return [
-            'Zarinpal' => 'Zarinpal\Facades\Zarinpal'
+            'Zarinpal' => 'Zarinpal\Facades\Zarinpal',
         ];
     }
-
 }
