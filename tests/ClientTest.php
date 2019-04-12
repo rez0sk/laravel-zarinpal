@@ -16,7 +16,7 @@ class ClientTest extends TestCase
 
     /**
      * @test if it returns response on ok status.
-     * @covers \Zarinpal\Client::paymentRequest
+     * @covers \Zarinpal\Client::request
      *
      * Given: Client receives status 200
      * Expect: No exceptions thrown
@@ -39,7 +39,7 @@ class ClientTest extends TestCase
 
     /**
      * @test if it throws exception on 404 response.
-     * @covers \Zarinpal\Client::paymentRequest
+     * @covers \Zarinpal\Client::request
      *
      * @return void
      * @throws InvalidDataException
